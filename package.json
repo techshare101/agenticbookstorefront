@@ -14,5 +14,9 @@
   "type": "commonjs",
   "devDependencies": {
     "vite": "^8.1.4"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "stripe": "^15.12.0"
   }
 }

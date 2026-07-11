@@ -305,7 +305,6 @@ footer{
                   https://yourdomain.com/this-page.html?paid=1
    ============================================================ */
 const BOOK_URL = "https://agenticbookfulledition.vercel.app/";   // interactive 3D reader (live)
-const PDF_URL  = "the-agentic-entrepreneur-mmt-edition.pdf";      // full ebook download
 const PAYMENT_LINK = "https://buy.stripe.com/8x200j9gL9t22Bp7ux3840h";
 
 const veil=document.getElementById('veil');
@@ -315,12 +314,15 @@ const success=document.getElementById('co-success');
 let paid=false;
 
 /* ---- unlock flow ---- */
-function unlock(){
+function unlock(token){
   paid=true;
   document.getElementById('buyrow').style.display='none';
   const u=document.getElementById('unlocked');u.style.display='block';
-  document.getElementById('btn-dl').href=PDF_URL;
-  document.getElementById('co-dl').href=PDF_URL;
+  
+  // Set the download link using the secure signed token
+  const downloadUrl = `/api/download?token=${token}`;
+  document.getElementById('btn-dl').href=downloadUrl;
+  document.getElementById('co-dl').href=downloadUrl;
   document.getElementById('book3d').classList.remove('locked');
 }
 function openBook(){window.open(BOOK_URL,'_blank')}
@@ -328,8 +330,53 @@ document.getElementById('btn-open').onclick=openBook;
 document.getElementById('co-open').onclick=()=>{closeModal();openBook()};
 document.getElementById('co-dl').onclick=()=>{closeModal()};
 
-/* returning from a real Payment Link with ?paid=1 */
-if(new URLSearchParams(location.search).get('paid')==='1')unlock();
+/* ---- Stripe Session Verification ---- */
+async function verifySession(sessionId) {
+  // Show modal in loading state
+  veil.classList.add('show');
+  form.style.display='none';
+  processing.style.display='block';
+  success.style.display='none';
+  
+  const msgEl = document.getElementById('co-processing-msg') || processing.querySelector('.msg');
+  const subEl = processing.querySelector('.sub2');
+  
+  if (msgEl) msgEl.innerText = "VERIFYING PAYMENT...";
+  if (subEl) subEl.innerText = "Connecting to Stripe to confirm your purchase. Please wait.";
+
+  try {
+    const response = await fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`);
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      if (msgEl) msgEl.innerText = "PAYMENT VERIFIED";
+      if (subEl) subEl.innerText = "Purchase confirmed! Unlocking your book...";
+      
+      setTimeout(() => {
+        processing.style.display='none';
+        success.style.display='block';
+        unlock(data.token);
+      }, 1500);
+    } else {
+      throw new Error(data.error || "Payment verification failed.");
+    }
+  } catch (error) {
+    console.error("Verification error:", error);
+    if (msgEl) msgEl.innerText = "VERIFICATION FAILED";
+    if (subEl) subEl.style.color = "#ff5470";
+    if (subEl) subEl.innerText = error.message || "We could not verify your purchase. Please contact support.";
+  }
+}
+
+// Automatically check for Stripe Checkout session ID on page load
+const urlParams = new URLSearchParams(location.search);
+const sessionId = urlParams.get('session_id');
+if (sessionId) {
+  verifySession(sessionId);
+} else if (urlParams.get('paid') === '1') {
+  // Legacy / demo fallback
+  unlock('demo');
+}
 
 /* ---- modal ---- */
 function openModal(){
@@ -355,7 +402,21 @@ document.getElementById('pay-btn').onclick=()=>{
   });
   if(!ok)return;
   form.style.display='none';processing.style.display='block';
-  setTimeout(()=>{processing.style.display='none';success.style.display='block';unlock()},2200);
+  
+  // Local demo verify
+  setTimeout(async () => {
+    try {
+      const response = await fetch('/api/verify-session?session_id=mock_demo_123');
+      const data = await response.json();
+      processing.style.display='none';
+      success.style.display='block';
+      unlock(data.token);
+    } catch (e) {
+      processing.style.display='none';
+      success.style.display='block';
+      unlock('demo_fallback');
+    }
+  }, 2200);
 };
 
 /* card number formatting */
