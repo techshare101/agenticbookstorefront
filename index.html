@@ -180,6 +180,8 @@ h1 .gold{color:var(--gold-soft)}
   border:2px solid var(--acid);display:flex;align-items:center;justify-content:center;
   color:var(--acid);font-size:28px;box-shadow:0 0 40px rgba(0,255,159,.4);animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
 @keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+#co-success .buyrow{display:flex;gap:10px;justify-content:center;flex-wrap:nowrap}
+#co-success .cta{padding:10px 14px;font-size:10px;letter-spacing:0.1em}
 
 /* ---------- unlocked panel ---------- */
 #unlocked{display:none;margin-top:6px}
@@ -276,8 +278,11 @@ footer{
     <div class="co-state" id="co-success">
       <div class="checkmark">✓</div>
       <div class="msg">PAYMENT SUCCESSFUL</div>
-      <div class="sub2">Your copy of The Agentic Entrepreneur is unlocked.</div>
-      <button class="cta" id="co-continue" style="margin-top:26px">Open the Ebook&nbsp;&nbsp;▶</button>
+      <div class="sub2">Your copy of The Agentic Entrepreneur is unlocked. A receipt and download link have been sent to your email.</div>
+      <div class="buyrow" style="margin-top:26px; justify-content:center">
+        <button class="cta" id="co-open">Open the Ebook&nbsp;&nbsp;▶</button>
+        <a class="cta gold" id="co-dl" download>Download PDF</a>
+      </div>
     </div>
   </div>
 </div>
@@ -312,11 +317,13 @@ function unlock(){
   document.getElementById('buyrow').style.display='none';
   const u=document.getElementById('unlocked');u.style.display='block';
   document.getElementById('btn-dl').href=PDF_URL;
+  document.getElementById('co-dl').href=PDF_URL;
   document.getElementById('book3d').classList.remove('locked');
 }
 function openBook(){window.open(BOOK_URL,'_blank')}
 document.getElementById('btn-open').onclick=openBook;
-document.getElementById('co-continue').onclick=()=>{closeModal();openBook()};
+document.getElementById('co-open').onclick=()=>{closeModal();openBook()};
+document.getElementById('co-dl').onclick=()=>{closeModal()};
 
 /* returning from a real Payment Link with ?paid=1 */
 if(new URLSearchParams(location.search).get('paid')==='1')unlock();
