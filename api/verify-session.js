@@ -29,17 +29,19 @@ module.exports = async (req, res) => {
     ? process.env.JWT_SECRET.trim().replace(/\\n/g, '').replace(/\\r/g, '').replace(/"/g, '')
     : 'fallback_local_test_secret_12345';
 
-  // For testing purposes, if Stripe secret key is not set, allow mock verification for mock session IDs
+  // Bypass Stripe validation for testing/demo mock session IDs
+  if (sessionId.startsWith('mock_')) {
+    console.warn('Running in Mock/Demo mode for session:', sessionId);
+    const token = jwt.sign(
+      { sessionId, email: 'demo@metalmindtech.com', mock: true },
+      jwtSecret,
+      { expiresIn: '5m' }
+    );
+    return res.status(200).json({ success: true, token });
+  }
+
+  // Ensure STRIPE_SECRET_KEY is configured for real payments
   if (!stripeSecretKey) {
-    console.warn('STRIPE_SECRET_KEY is not set. Running in Demo/Test mode.');
-    if (sessionId.startsWith('mock_')) {
-      const token = jwt.sign(
-        { sessionId, email: 'demo@metalmindtech.com', mock: true },
-        jwtSecret,
-        { expiresIn: '5m' }
-      );
-      return res.status(200).json({ success: true, token });
-    }
     return res.status(500).json({
       success: false,
       error: 'STRIPE_SECRET_KEY is not configured in environment variables. Set this in Vercel Dashboard.'
