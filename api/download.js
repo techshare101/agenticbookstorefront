@@ -42,7 +42,9 @@ module.exports = async (req, res) => {
     `);
   }
 
-  const jwtSecret = process.env.JWT_SECRET || 'fallback_local_test_secret_12345';
+  const jwtSecret = process.env.JWT_SECRET
+    ? process.env.JWT_SECRET.trim().replace(/\\n/g, '').replace(/\\r/g, '').replace(/"/g, '')
+    : 'fallback_local_test_secret_12345';
 
   try {
     // Verify the JWT token

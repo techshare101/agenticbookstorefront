@@ -22,8 +22,12 @@ module.exports = async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing session_id parameter.' });
   }
 
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  const jwtSecret = process.env.JWT_SECRET || 'fallback_local_test_secret_12345';
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+    ? process.env.STRIPE_SECRET_KEY.trim().replace(/\\n/g, '').replace(/\\r/g, '').replace(/"/g, '')
+    : undefined;
+  const jwtSecret = process.env.JWT_SECRET
+    ? process.env.JWT_SECRET.trim().replace(/\\n/g, '').replace(/\\r/g, '').replace(/"/g, '')
+    : 'fallback_local_test_secret_12345';
 
   // For testing purposes, if Stripe secret key is not set, allow mock verification for mock session IDs
   if (!stripeSecretKey) {
