@@ -29,16 +29,6 @@ module.exports = async (req, res) => {
     ? process.env.JWT_SECRET.trim().replace(/\\n/g, '').replace(/\\r/g, '').replace(/"/g, '')
     : 'fallback_local_test_secret_12345';
 
-  // Bypass Stripe validation for testing/demo mock session IDs
-  if (sessionId.startsWith('mock_')) {
-    console.warn('Running in Mock/Demo mode for session:', sessionId);
-    const token = jwt.sign(
-      { sessionId, email: 'demo@metalmindtech.com', mock: true },
-      jwtSecret,
-      { expiresIn: '5m' }
-    );
-    return res.status(200).json({ success: true, token });
-  }
 
   // Ensure STRIPE_SECRET_KEY is configured for real payments
   if (!stripeSecretKey) {
